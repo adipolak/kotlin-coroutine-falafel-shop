@@ -2,19 +2,21 @@ package falafel_stand
 
 import log
 import java.lang.Thread.sleep
+import kotlin.system.measureTimeMillis
 
-fun main(args: Array<String>) {
+fun main() {
+
     val orders = listOf(
         Menu.FalafelInAPlate(listOf(Salad.RedOnion,Salad.SpicySalad),FalafelBalls.OvenCookedBalls),
         Menu.FalafelInAPlate(listOf(Salad.RedOnion,Salad.SpicySalad),FalafelBalls.OvenCookedBalls),
         Menu.FalafelInPita(listOf(Salad.RedOnion,Salad.RedOnion),FalafelBalls.FriedBalls),
         Menu.FalafelInPita(listOf(Salad.TomatoSalad,Salad.SpicySalad),FalafelBalls.FriedBalls)
     )
-    val start = System.currentTimeMillis()
-    makeFalafel(orders)
-    log( " make falafel ${System.currentTimeMillis() - start} ")
 
-
+    val time = measureTimeMillis {
+        makeFalafel(orders)
+    }
+    log(" ###### falafel $time")
 }
 
 

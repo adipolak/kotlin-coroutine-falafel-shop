@@ -14,7 +14,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import log
 import kotlin.coroutines.CoroutineContext
 
-fun main(args: Array<String>) {
+fun main() {
 
     val orders = listOf(
         Menu.FalafelInAPlate(listOf(Salad.RedOnion,Salad.SpicySalad),FalafelBalls.OvenCookedBalls),
@@ -22,28 +22,29 @@ fun main(args: Array<String>) {
         Menu.FalafelInPita(listOf(Salad.RedOnion,Salad.RedOnion),FalafelBalls.FriedBalls),
         Menu.FalafelInPita(listOf(Salad.TomatoSalad,Salad.SpicySalad),FalafelBalls.FriedBalls)
     )
-
-    val start = System.currentTimeMillis()
-    makeFalafel(orders)
-    log( " ###### Make falafel without threads or coroutines ${System.currentTimeMillis() - start} ")
-
+    printHeader("start")
+    var time = measureTimeMillis {
+        makeFalafel(orders)
+    }
+    printHeader(" falafel $time")
 
     runBlocking {
-        var time = measureTimeMillis {
+         time = measureTimeMillis {
 
             falafelWithCoroutine(orders)
         }
-        log(" ###### falafel with coroutine $time")
+        printHeader("falafel with coroutine $time")
+
         time = measureTimeMillis {
             falafelWithCoroutineAndDispatcher(orders)
         }
 
-        log(" ###### falafel with coroutine and dispatcher $time")
+        printHeader("falafel with coroutine and dispatcher $time")
 
         time = measureTimeMillis {
             falafelWithChannel(orders)
         }
-        log(" ###### falafel with channel $time" )
+        printHeader(" falafel with channel $time" )
 
     }
 
@@ -66,9 +67,15 @@ fun main(args: Array<String>) {
 
 }
 
+private fun printHeader(str: String) {
+    log(" ########################################################################")
+    log(" ###### $str  ###### ")
+    log(" ########################################################################")
+}
 
 
 private suspend fun CoroutineScope.falafelWithChannel(orders: List<Menu>) {
+
     val ordersChannel = Channel<Menu>()
     val job = launch {
         for (order in orders) {
@@ -87,32 +94,44 @@ private suspend fun makeFalafelWithCoroutineAndChannel(ordersChannel :ReceiveCha
 
 
     for(order in ordersChannel){
-        log("processing order: ${order}")
-        val dish = when(order){
-            is Menu.FalafelInPita -> {
-                val salads = getSaladsSuspended(order.salads)
-                val flafelBalls = getFalafelBallsSuspended(order.falafel)
-                assembleDishInPitaSuspended(order, salads, flafelBalls)
-            }
-            is Menu.FalafelInAPlate -> {
-                val salads = getSaladsSuspended(order.salads)
-                val falafelBalls = getFalafelBallsSuspended(order.falafel)
-                assemblePlateSuspended(order, salads, falafelBalls)
-            }
-        }
-
-        log("SERVE: $dish")
+        falafelWithSuspended(order)
     }
 
 }
 
+private suspend fun falafelWithSuspended(order: Menu) {
+    log("processing order: ${order}")
+    val dish = when (order) {
+        is Menu.FalafelInPita -> {
+            val salads = getSaladsSuspended(order.salads)
+            val flafelBalls = getFalafelBallsSuspended(order.falafel)
+            assembleDishInPitaSuspended(order, salads, flafelBalls)
+        }
+        is Menu.FalafelInAPlate -> {
+            val salads = getSaladsSuspended(order.salads)
+            val falafelBalls = getFalafelBallsSuspended(order.falafel)
+            assemblePlateSuspended(order, salads, falafelBalls)
+        }
+    }
+
+    log("SERVE: $dish")
+}
+
 private suspend fun falafelWithCoroutine(orders: List<Menu>) {
+
+    log(" ###### falafel with coroutines ######")
     coroutineScope {
-        launch(CoroutineName("falafel_routine")) { makeFalafel(orders) }
+        launch(CoroutineName("falafel_routine")) {
+            for( order in orders){
+                falafelWithSuspended(order)
+            }
+        }
     }
 }
 
 private suspend fun falafelWithCoroutineAndDispatcher(orders: List<Menu>) {
+    log(" ###### falafel with coroutines and dispatcher ######")
+
     coroutineScope {
         launch(Dispatchers.Default + CoroutineName("falafel_routine_with_thread_pool")) {
             makeFalafel(orders)
@@ -132,20 +151,20 @@ private suspend fun  assembleDishInPitaSuspended(order:Menu.FalafelInPita,salads
 
 private suspend fun assemblePlateSuspended(order:Menu.FalafelInAPlate, salads: MixedSalad, falafelBalls: FalafelBalls): Dish.FalafelInAPlate {
     log(" adding salads and falafel to the plate")
-    Thread.sleep(10)
+    delay(10)
     return Dish.FalafelInAPlate(order, salads,falafelBalls)
 }
 
 private suspend fun getFalafelBallsSuspended(falafel: FalafelBalls): FalafelBalls {
     log(" make  ${falafel.toString()}")
-    Thread.sleep(5)
+    delay(5)
 
     return falafel
 }
 
 private suspend fun getSaladsSuspended(salads: List<Salad>): MixedSalad {
     log(" cut salads for ${salads.toString()}")
-    Thread.sleep(2 * salads.size.toLong())
+    delay(2 * salads.size.toLong())
 
     return MixedSalad(salads, salads.sumByDouble { it.price().toDouble() }.toFloat())
 }
