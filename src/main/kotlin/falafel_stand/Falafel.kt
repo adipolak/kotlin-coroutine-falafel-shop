@@ -55,7 +55,6 @@ sealed class Menu {
         override fun price() =  0.0f + salads.sumByDouble { it.price().toDouble() * 2 }.toFloat() + falafel.price()
         override fun toString() = "FalafelInAPlate(falafel=$falafel, salads=${salads.joinToString {it.toString() }}, price=$${price().format(2)}) "
     }
-
 }
 
 sealed class Dish {

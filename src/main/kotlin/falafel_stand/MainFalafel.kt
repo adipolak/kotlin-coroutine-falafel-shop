@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
 }
 
 
- fun makeFalafel(orders :List<Menu>){
+fun makeFalafel(orders :List<Menu>){
 
     for(order in orders){
         makeFalafel(order)
