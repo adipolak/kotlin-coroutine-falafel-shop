@@ -22,10 +22,12 @@ fun main() {
         Menu.FalafelInPita(listOf(Salad.RedOnion,Salad.RedOnion),FalafelBalls.FriedBalls),
         Menu.FalafelInPita(listOf(Salad.TomatoSalad,Salad.SpicySalad),FalafelBalls.FriedBalls)
     )
+//    var time = 0
     printHeader("start")
     var time = measureTimeMillis {
         makeFalafel(orders)
     }
+
     printHeader(" falafel $time")
 
     runBlocking {
@@ -38,9 +40,9 @@ fun main() {
         time = measureTimeMillis {
             falafelWithCoroutineAndDispatcher(orders)
         }
-
+//
         printHeader("falafel with coroutine and dispatcher $time")
-
+//
         time = measureTimeMillis {
             falafelWithChannel(orders)
         }
@@ -91,12 +93,9 @@ private suspend fun CoroutineScope.falafelWithChannel(orders: List<Menu>) {
 
 
 private suspend fun makeFalafelWithCoroutineAndChannel(ordersChannel :ReceiveChannel<Menu>){
-
-
     for(order in ordersChannel){
         falafelWithSuspended(order)
     }
-
 }
 
 private suspend fun falafelWithSuspended(order: Menu) {
@@ -145,7 +144,7 @@ private suspend fun falafelWithCoroutineAndDispatcher(orders: List<Menu>) {
 
 private suspend fun  assembleDishInPitaSuspended(order:Menu.FalafelInPita,salads: MixedSalad, falafelBalls: FalafelBalls): Dish.FalafelInPitta {
     log(" adding salads and falafel to pita")
-    Thread.sleep(10)
+    delay(10)
     return Dish.FalafelInPitta(order, salads,falafelBalls)
 }
 
